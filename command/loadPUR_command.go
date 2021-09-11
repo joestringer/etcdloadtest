@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cilium/cilium/pkg/rate"
 	"github.com/spf13/cobra"
 	"go.etcd.io/etcd/clientv3"
 )
@@ -43,6 +44,8 @@ func NewLoadPURCommand() *cobra.Command {
 	cmd.Flags().StringVar(&mode, "mode", "all", "all, put, update, get")
 	cmd.Flags().IntVar(&noOfPrefixes, "total-prefixes", 10, "total no of unique prefixes to use")
 	cmd.Flags().IntVar(&totalKeys, "total-keys", 1000, "total number of keys to watch")
+	cmd.Flags().Int64Var(&insertRateLimit, "insert-limit", 1000, "no of keys to inject per 'insert-interval'")
+	cmd.Flags().DurationVar(&insertRateInterval, "insert-interval", time.Minute, "interval for regular key injection")
 	cmd.Flags().IntVar(&keyLength, "key-length", 64, "length of key for the operation")
 	cmd.Flags().IntVar(&valueLength, "value-length", 64, "length of value for the operation")
 	cmd.Flags().StringVar(&consistencyType, "consistency", "l", "Linearizable(l) or Serializable(s)")
@@ -93,6 +96,11 @@ func runPUR(cmd *cobra.Command, cycles, round int) {
 	keySuffixes := RandomStrings(uint(keyLength-prefixLength), keyPerPrefix)
 	values := RandomStrings(uint(valueLength), totalKeys)
 	keys := make([]string, 0)
+
+	insertRateLimiter := rate.NewLimiter(
+		insertRateInterval,
+		insertRateLimit,
+	)
 
 	for _, keyPrefix := range keyPrefixes {
 		for _, keySuffix := range keySuffixes {
@@ -159,6 +167,9 @@ func runPUR(cmd *cobra.Command, cycles, round int) {
 						log.Fatalf("failed to put key: %v, got err : ", key, err)
 					}
 					clientIndex++
+					if err := insertRateLimiter.Wait(ctxt); err != nil {
+						log.Fatalf("rate limiter failed: %w", err)
+					}
 				}
 			}(subKeys, subValues, subsclient)
 		}

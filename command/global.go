@@ -34,6 +34,9 @@ var (
 	keyLength              int           // Total length of key
 	valueLength            int           // Total length of value
 	consistencyType        string        // consistency for read operation
+
+	insertRateLimit    int64
+	insertRateInterval time.Duration
 )
 
 // GlobalFlags are flags that defined globally
