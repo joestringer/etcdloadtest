@@ -14,10 +14,13 @@
 
 package command
 
-import "math/rand"
+import (
+	"fmt"
+	"math/rand"
+)
 
 const (
-	chars = "abcdefghijklmnopqrstuvwxyz0123456789"
+	chars = "0123456789"
 )
 
 // UniqueStrings retruns a slice of randomly generated unique strings.
@@ -46,9 +49,5 @@ func RandomStrings(maxlen uint, n int) []string {
 }
 
 func randomString(l uint) string {
-	s := make([]byte, l)
-	for i := 0; i < int(l); i++ {
-		s[i] = chars[rand.Intn(len(chars))]
-	}
-	return string(s)
+	return "cilium/state/identities/v1/id/" + fmt.Sprintf("%d", rand.Intn(65535))
 }
