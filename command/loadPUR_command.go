@@ -223,9 +223,11 @@ func runPUR(cmd *cobra.Command, cycles, round int) {
 		rc.Close()
 	}
 
-	for _, keyPrefix := range keyPrefixes {
-		if err = deletePrefix(ctx, cl, keyPrefix); err != nil {
-			log.Fatalf("failed to clean up keys after test: %v", err)
+	if mode == "all" {
+		for _, keyPrefix := range keyPrefixes {
+			if err = deletePrefix(ctx, cl, keyPrefix); err != nil {
+				log.Fatalf("failed to clean up keys after test: %v", err)
+			}
 		}
 	}
 
